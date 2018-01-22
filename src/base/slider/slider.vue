@@ -11,6 +11,7 @@
 
 <script type="text/ecmascript-6">
 import BScroll from 'better-scroll'
+import {addClass} from 'common/js/dom'
 
 export default {
   props: {
@@ -34,15 +35,42 @@ export default {
     }, 20)
   },
   methods: {
-    _setSliderWidth() {
-      this.children = this.$refs.sliderGroup
+    _setSliderWidth(isResize) {
+      this.children = this.$refs.sliderGroup.children
+
+      let width = 0
+      let sliderWidth = this.$refs.slider.clientWidth
+      for (let i = 0; i < this.children.length; i++) {
+        let child = this.children[i]
+        addClass(child, 'slider-item')
+
+        child.style.width = sliderWidth + 'px'
+        width += sliderWidth
+      }
+
+      if (this.loop && !isResize) {
+        width += 2 * sliderWidth
+      }
+      this.$refs.sliderGroup.style.width = width + 'px'
     },
-    _initSlider() {}
+    _initSlider() {
+      this.slider = new BScroll(this.$refs.slider, {
+        scrollX: true,
+        scrollY: false,
+        momentum: false,
+        snap: {
+          loop: this.loop,
+          threshold: 0.3,
+          speed: 400
+        },
+        click: true
+      })
+    }
   }
 }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
+<style lang="stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
 
   .slider
