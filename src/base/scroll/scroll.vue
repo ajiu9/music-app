@@ -19,6 +19,10 @@ export default {
     data: {
       type: Array,
       default: null
+    },
+    lestenScroll: {
+      type: Boolean,
+      default: true
     }
   },
   mounted () {
@@ -35,6 +39,12 @@ export default {
         probeType: this.probeType,
         click: this.click
       })
+      if (this.lestenScroll) {
+        let me = this
+        this.scroll.on('scroll', (pos) => {
+          me.$emit('scroll', pos)
+        })
+      }
     },
     enable() {
       this.scroll && this.scroll.enable()
@@ -44,10 +54,16 @@ export default {
     },
     refresh() {
       this.scroll && this.scroll.refresh()
+    },
+    scorllTo() {
+      this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
+    },
+    scrollToElement() {
+      this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
     }
   },
   watch: {
-    data () {
+    data() {
       setTimeout(() => {
         this.refresh()
       }, 20)
