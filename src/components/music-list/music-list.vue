@@ -76,7 +76,6 @@ export default {
         list: this.songs,
         index: index
       })
-      console.log(index)
     },
     ...mapActions([
       'selectPlay'
