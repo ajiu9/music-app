@@ -196,7 +196,7 @@ export default {
 
       .name {
         margin-left: 20px;
-        color: $color-text-l;
+        color: $color-text-ll;
         font-size: $font-size-medium;
       }
     }
@@ -218,7 +218,7 @@ export default {
     .item {
       padding: 3px;
       line-height: 1;
-      color: $color-text-l;
+      color: $color-text-ll;
       font-size: $font-size-small;
 
       &.current {
@@ -238,7 +238,7 @@ export default {
       line-height: 30px;
       padding-left: 20px;
       font-size: $font-size-small;
-      color: $color-text-l;
+      color: $color-text-ll;
       background: $color-highlight-background;
     }
   }

@@ -1,7 +1,7 @@
 <template>
   <div class="m-header">
     <div class="icon"></div>
-    <h1 class="text">Chicken Music</h1>
+    <h1 class="text">江月夜</h1>
   </div>
 </template>
 
@@ -27,6 +27,8 @@ export default {}
       margin-right: 9px
       bg-image('logo')
       background-size: 30px 32px
+      border-radius: 50%
+      overflow: hidden
     .text
       display: inline-block
       vertical-align: top
