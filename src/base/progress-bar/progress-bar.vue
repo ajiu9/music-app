@@ -49,6 +49,7 @@ export default {
       const rect = this.$refs.progressBar.getBoundingClientRect()
       const offsetWidth = e.pageX - rect.left
       this._offset(offsetWidth)
+      console.log()
       // 点击progressBtn时候，offsetX获取不对
       // this._offset(e.offsetX)
       this._triggerPercent()
