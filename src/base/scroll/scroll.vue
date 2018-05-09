@@ -55,7 +55,7 @@ export default {
     refresh() {
       this.scroll && this.scroll.refresh()
     },
-    scorllTo() {
+    scrollTo() {
       this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
     },
     scrollToElement() {
