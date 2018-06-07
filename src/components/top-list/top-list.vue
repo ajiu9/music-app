@@ -7,7 +7,7 @@
 <script type="text/ecmascript-6">
 import MusicList from 'components/music-list/music-list'
 import {mapGetters} from 'vuex'
-import {getSongList} from 'api/recommend'
+import {getMusicList} from 'api/rank'
 import {ERR_OK} from 'api/config'
 import {createSong} from 'common/js/song'
 import {getSongVKey} from 'api/song'
@@ -19,34 +19,39 @@ export default {
     }
   },
   created() {
-    this._getSongList()
+    this._getMusicList()
   },
   computed: {
     title() {
-      return this.disc.dissname
+      return this.topList.topTitle
     },
     bgImage() {
-      return this.disc.imgurl
+      if (this.songs.length) {
+        return this.songs[0].image
+      }
+      return ''
     },
     ...mapGetters([
-      'disc'
+      'topList'
     ])
   },
   methods: {
-    _getSongList() {
-      if (!this.disc.dissid) {
-        this.$router.push('/recommend')
+    _getMusicList() {
+      if (!this.topList.id) {
+        this.$router.push('/rank')
         return
       }
-      getSongList(this.disc.dissid).then((res) => {
+      getMusicList(this.topList.id).then((res) => {
         if (res.code === ERR_OK) {
-          this.songs = this._normalSizeSongs(res.cdlist[0].songlist)
+          this.songs = this._normalSizeSongs(res.songlist)
+          console.log(this.songs)
         }
       })
     },
     _normalSizeSongs(list) {
       let ret = []
-      list.forEach((musicData) => {
+      list.forEach((item) => {
+        const musicData = item.data
         if (musicData.songid && musicData.albummid) {
           getSongVKey(musicData.songmid).then((res) => {
             if (res.code === ERR_OK) {
@@ -66,8 +71,8 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
-.slide-enter-active, .slide-leave-active
-  transition: all 0.3s
-.slide-enter, .slide-leave-to
-  transform: translate3d(100%, 0, 0)
+  .slide-enter-active, .slide-leave-active
+    transition: all 0.3s
+  .slide-enter, .slide-leave-to
+    transform: translate3d(100%, 0, 0)
 </style>

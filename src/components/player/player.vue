@@ -345,9 +345,9 @@ export default {
       const offsetWidth = Math.min(0, Math.max(-window.innerWidth, left + deltaX))
       this.touch.percent = Math.abs(offsetWidth / window.innerWidth)
       this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
-      this.$refs.lyricList.$el.style[transitionDuration] = 0
+      this.$refs.lyricList.$el.style[transitionDuration] = ''
       this.$refs.middleL.style.opacity = 1 - this.touch.percent
-      this.$refs.middleL.style[transitionDuration] = 0
+      this.$refs.middleL.style[transitionDuration] = ''
     },
     middleTouchEnd() {
       let offsetWidth
