@@ -1,7 +1,9 @@
 <template>
   <scroll class="suggest" :data="result"
                           :pullup="pullup"
-                          @scrollToEnd="searchMore">
+                          :beforeScroll="beforeScroll"
+                          @scrollToEnd="searchMore"
+                          @beforeScroll="listScroll">
     <ul class="suggest-list">
       <li @click="selectItem(item)" class="suggest-item" v-for="item in result" :key="item.id">
         <div class="icon">
@@ -13,6 +15,9 @@
       </li>
     <loading v-show="hasMore" title=""></loading>
     </ul>
+    <div v-show="!hasMore && !result.length" class="no-result-wrapper">
+      <no-result title="抱歉,暂无搜索结果"></no-result>
+    </div>
   </scroll>
 </template>
 
@@ -25,6 +30,7 @@ import Loading from 'base/loading/loading'
 import Singer from 'common/js/singer'
 import {mapMutations, mapActions} from 'vuex'
 import {getOnlySongVKey} from 'api/song'
+import NoResult from 'base/no-result/no-result'
 
 const TYPE_SINGER = 'singer'
 const SONGMID = '000FPlKu2ibVOn'
@@ -46,7 +52,8 @@ export default {
       result: [],
       pullup: true,
       hasMore: true,
-      vKey: ''
+      vKey: '',
+      beforeScroll: true
     }
   },
   created() {
@@ -151,7 +158,8 @@ export default {
   },
   components: {
     Scroll,
-    Loading
+    Loading,
+    NoResult
   }
 }
 </script>
