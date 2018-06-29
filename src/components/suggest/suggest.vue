@@ -1,7 +1,9 @@
 <template>
-  <div class="suggest">
+  <scroll class="suggest" :data="result"
+                          :pullup="pullup"
+                          @scrollToEnd="searchMore">
     <ul class="suggest-list">
-      <li class="suggest-item" v-for="item in result" :key="item.id">
+      <li @click="selectItem(item)" class="suggest-item" v-for="item in result" :key="item.id">
         <div class="icon">
           <i :class="getIconCls(item)"></i>
         </div>
@@ -9,15 +11,23 @@
           <p class="text" v-html="getDisplayName(item)"></p>
         </div>
       </li>
+    <loading v-show="hasMore" title=""></loading>
     </ul>
-  </div>
+  </scroll>
 </template>
 
 <script type="text/ecmascript-6">
 import {search} from 'api/search'
 import {ERR_OK} from 'api/config'
+import {createSong} from 'common/js/song'
+import Scroll from 'base/scroll/scroll'
+import Loading from 'base/loading/loading'
+import Singer from 'common/js/singer'
+import {mapMutations, mapActions} from 'vuex'
+import {getOnlySongVKey} from 'api/song'
 
 const TYPE_SINGER = 'singer'
+const SONGMID = '000FPlKu2ibVOn'
 
 export default {
   props: {
@@ -33,14 +43,36 @@ export default {
   data() {
     return {
       page: 1,
-      result: []
+      result: [],
+      pullup: true,
+      hasMore: true,
+      vKey: ''
     }
+  },
+  created() {
+    // 获取一个固定的vKey
+    this._getOnlySongVKey()
   },
   methods: {
     search() {
+      this.page = 1
+      this.hasMore = true
       search(this.query, this.page, this.showSinger).then((res) => {
         if (res.code === ERR_OK) {
           this.result = this._genResult(res.data)
+          this._checkMore(res.data)
+        }
+      })
+    },
+    searchMore() {
+      if (!this.hasMore) {
+        return
+      }
+      this.page++
+      search(this.query, this.page, this.showSinger).then((res) => {
+        if (res.code === ERR_OK) {
+          this.result = this.result.concat(this._genResult(res.data))
+          this._checkMore(res.data)
         }
       })
     },
@@ -55,7 +87,27 @@ export default {
       if (item.type === TYPE_SINGER) {
         return item.singername
       } else {
-        return `${item.songname}-`
+        return `${item.name}-${item.singer}`
+      }
+    },
+    selectItem(item) {
+      if (item.type === TYPE_SINGER) {
+        const singer = new Singer({
+          id: item.singermid,
+          name: item.singername
+        })
+        this.$router.push({
+          path: `/search/${singer.id}`
+        })
+        this.setSinger(singer)
+      } else {
+        this.insertSong(item)
+      }
+    },
+    _checkMore(data) {
+      const song = data.song
+      if (!song.list.length || (song.curnum + song.curpage * 20) >= song.totalnum) {
+        this.hasMore = false
       }
     },
     _genResult(data) {
@@ -64,16 +116,42 @@ export default {
         ret.push({...data.zhida, ...{type: TYPE_SINGER}})
       }
       if (data.song) {
-        ret = ret.concat(data.song.list)
+        ret = ret.concat(this._normalSizeSongs(data.song.list))
       }
-      console.log(ret)
       return ret
-    }
+    },
+    _normalSizeSongs(list) {
+      let ret = []
+      list.forEach((item) => {
+        const musicData = item
+        if (musicData.songid && musicData.albummid) {
+          ret.push(createSong(musicData, this.vKey))
+        }
+      })
+      return ret
+    },
+    _getOnlySongVKey() {
+      getOnlySongVKey(SONGMID).then((res) => {
+        if (res.code === ERR_OK) {
+          this.vKey = res.data.items[0].vkey
+        }
+      })
+    },
+    ...mapMutations({
+      setSinger: 'SET_SINGER'
+    }),
+    ...mapActions([
+      'insertSong'
+    ])
   },
   watch: {
     query() {
       this.search()
     }
+  },
+  components: {
+    Scroll,
+    Loading
   }
 }
 </script>
