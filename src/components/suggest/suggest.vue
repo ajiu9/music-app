@@ -111,6 +111,9 @@ export default {
         this.insertSong(item)
       }
     },
+    listScroll() {
+      this.$emit('listScroll')
+    },
     _checkMore(data) {
       const song = data.song
       if (!song.list.length || (song.curnum + song.curpage * 20) >= song.totalnum) {
