@@ -1,5 +1,6 @@
 <template>
-  <scroll class="suggest" :data="result"
+  <scroll class="suggest" ref="suggest"
+                          :data="result"
                           :pullup="pullup"
                           :beforeScroll="beforeScroll"
                           @scrollToEnd="searchMore"
@@ -110,9 +111,13 @@ export default {
       } else {
         this.insertSong(item)
       }
+      this.$emit('select')
     },
     listScroll() {
       this.$emit('listScroll')
+    },
+    refresh() {
+      this.$refs.suggest.refresh()
     },
     _checkMore(data) {
       const song = data.song
