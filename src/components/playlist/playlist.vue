@@ -4,24 +4,24 @@
       <div class="list-wrapper" @click.stop>
         <div class="list-header">
           <h1 class="title">
-            <i class="icon"></i>
-            <span class="text"></span>
-            <span class="clear"><i class="icon-clear"></i></span>
+            <i @click="changeMode" class="icon" :class="iconMode"></i>
+            <span class="text">{{modeText}}</span>
+            <span @click="showConfirm" class="clear"><i class="icon-clear"></i></span>
           </h1>
         </div>
         <scroll ref="listContent" :data="sequenceList" class="list-content">
-          <ul>
-            <li class="item" v-for="(item, index) in sequenceList" @click="selectItem(item, index)" :key="item.id">
+          <transition-group name="list" tag="ul">
+            <li ref="children" class="item" v-for="(item, index) in sequenceList" @click="selectItem(item, index)" :key="item.id">
               <i class="current" :class="getCurrentIcon(item)"></i>
-              <span class="text">{{item.name}}</span>
+              <span class="text" :class="getCurrentSty(item)">{{item.name}}</span>
               <span class="like">
                 <i class="icon-not-favorite"></i>
               </span>
-              <span class="delete">
+              <span @click.stop="deleteOne(item)" class="delete">
                 <i class="icon-delete"></i>
               </span>
             </li>
-          </ul>
+          </transition-group>
         </scroll>
         <div class="list-operate">
           <div class="add">
@@ -29,37 +29,45 @@
             <span class="text">添加歌曲到队列</span>
           </div>
         </div>
-        <div  @click="hide" class="list-close">
+        <div @click="hide" class="list-close">
           <span>关闭</span>
         </div>
       </div>
+      <confirm ref="confirm" @confirm="confirmClear" confirmBtnText="清空" text="是否清空播放列表"></confirm>
     </div>
   </transition>
 </template>
 
 <script type="text/ecmascript-6">
 import {playMode} from 'common/js/config'
-import {mapGetters, mapMutations} from 'vuex'
+import {mapGetters, mapMutations, mapActions} from 'vuex'
 import Scroll from 'base/scroll/scroll'
+import Confirm from 'base/confirm/confirm'
+import {playerMixin} from 'common/js/mixin'
 
 export default {
+  mixins: [playerMixin],
   data() {
     return {
       showFlag: false
     }
   },
   computed: {
+    modeText() {
+      return this.mode === playMode.sequence ? '顺序播放' : this.mode === playMode.loop ? '循环播放' : '随机播放'
+    },
     ...mapGetters([
-      'sequenceList',
-      'currentSong',
-      'mode',
-      'playList'
+      'playList',
+      'playing'
     ])
   },
   methods: {
     show() {
       this.showFlag = true
-      this.$refs.listContent.refresh()
+      setTimeout(() => {
+        this.$refs.listContent.refresh()
+        this.scrollToCurrent(this.currentSong)
+      }, 20)
     },
     hide() {
       this.showFlag = false
@@ -70,6 +78,12 @@ export default {
       }
       return ''
     },
+    getCurrentSty(item) {
+      if (this.currentSong.id === item.id) {
+        return 'sty'
+      }
+      return ''
+    },
     selectItem(item, index) {
       if (this.mode === playMode.random) {
         index = this.playList.findIndex((song) => {
@@ -77,13 +91,48 @@ export default {
         })
       }
       this.setCurrentIndex(index)
+      this.setPlayingState(true)
+    },
+    scrollToCurrent(current) {
+      const index = this.sequenceList.findIndex((item) => {
+        return item.id === current.id
+      })
+      this.$refs.listContent.scrollToElement(this.$refs.children[index], 300)
+    },
+    deleteOne(item) {
+      this.deleteSong(item)
+      if (!this.playList.length) {
+        this.hide()
+      }
+    },
+    showConfirm() {
+      this.$refs.confirm.show()
+    },
+    confirmClear() {
+      this.deleteSongList()
+      this.hide()
     },
     ...mapMutations({
-      'setCurrentIndex': 'SET_CURRENT_INDEX'
-    })
+      'setPlayingState': 'SET_PLAYING_STATE'
+    }),
+    ...mapActions([
+      'deleteSong',
+      'deleteSongList'
+    ])
+  },
+  watch: {
+    currentSong(newSong, oldSong) {
+      if (!this.showFlag || newSong.id === oldSong.id) {
+        return
+      }
+      setTimeout(() => {
+        this.scrollToCurrent(newSong)
+      }, 20)
+    }
   },
   components: {
-    Scroll
+    Scroll,
+    Confirm
   }
 }
 </script>
@@ -101,20 +150,19 @@ export default {
   z-index: 200
   background-color: $color-background-s
   &.list-fade-enter-active, &.list-fade-leave-active
-    transition: opacity 0.3s
+    transition: all 0.3s
     .list-wrapper
       transition: all 0.3s
   &.list-fade-enter, &.list-fade-leave-to
-    opacity: 0
+    background-color: rgba(0, 0, 0, 0)
     .list-wrapper
       transform: translate3d(0, 100%, 0)
-  &.list-fade-enter
   .list-wrapper
     position: absolute
     left: 0
     bottom: 0
     width: 100%
-    background-color: #fcfcfc
+    background-color: $color-background
     .list-header
       position: relative
       padding: 20px 30px 10px 20px
@@ -124,7 +172,7 @@ export default {
         .icon
           margin-right: 10px
           font-size: 30px
-          color: $color-theme-d
+          color: $color-theme
         .text
           flex: 1
           font-size: $font-size-medium
@@ -151,23 +199,25 @@ export default {
           flex: 0 0 20px
           width: 20px
           font-size: $font-size-small
-          color: $color-theme-d
+          color: $color-theme
         .text
           flex: 1
           no-wrap()
           font-size: $font-size-medium
           color: $color-text-l
+          &.sty
+            color: $color-theme
         .like
           extend-click()
           margin-right: 15px
           font-size: $font-size-small
-          color: $color-theme
+          color: $color-text-d
           .icon-favorite
             color: $color-sub-theme
         .delete
           extend-click()
           font-size: $font-size-small
-          color: $color-theme
+          color: $color-text-d
     .list-operate
       width: 140px
       margin: 20px auto 30px auto
@@ -186,7 +236,7 @@ export default {
     .list-close
       text-align: center
       line-height: 50px
-      background:  $color-background
+      background: $color-highlight-background
       font-size: $font-size-medium-x
       color: $color-text-l
 </style>

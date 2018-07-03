@@ -1,12 +1,12 @@
 <template>
   <transition name="confirm-fade">
-    <div class="confirm" v-show="showFlag">
+    <div class="confirm" v-show="showFlag" @click.stop>
       <div class="confirm-wrapper">
         <div class="confirm-content">
           <p class="text">{{text}}</p>
           <div class="operate">
-            <div @click="cancle" class="operate-btn left">{{cancleBtnText}}</div>
-            <div @click="confirm" class="operate-btn">{{confirmBtnText}}</div>
+            <div @click="cancle" class="operate-btn">{{cancleBtnText}}</div>
+            <div @click="confirm" class="operate-btn right">{{confirmBtnText}}</div>
           </div>
         </div>
       </div>
@@ -75,27 +75,24 @@ export default {
       z-index: 999
       .confirm-content
         width: 270px
-        border-radius: 13px
+        border-radius: 4px
         background: $color-background
         .text
           padding: 19px 15px
           line-height: 22px
-          text-align: center
-          font-size: $font-size-large
+          font-size: $font-size-medium
           color: $color-text-ll
         .operate
-          display: flex
-          align-items: center
-          text-align: center
-          font-size: $font-size-large
+          text-align: right
+          padding: 0 15px
+          font-size: $font-size-medium
           .operate-btn
-            flex: 1
+            display: inline-block
+            padding: 10px 20px
             line-height: 22px
-            padding: 10px 0
-            border-top: 1px solid $color-highlight-background
             color: $color-text-l
-            &.left
-              border-right: 1px solid $color-highlight-background
+            &.right
+              color: $color-theme
 
   @keyframes confirm-fadein
     0%

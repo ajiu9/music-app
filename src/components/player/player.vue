@@ -8,7 +8,7 @@
     >
       <div class="normal-player" v-show="fullScreen">
         <div class="background">
-          <img width="100%" height="100%" :src="currentSong.image">
+          <img width="100%" height="100%" v-lazy="currentSong.image">
         </div>
         <div class="top">
           <div class="back" @click="back">
@@ -21,7 +21,7 @@
           <div class="middle-l" ref="middleL">
             <div class="cd-wrapper" ref="cdWrapper">
               <div class="cd" :class="cdCls">
-                <img class="image" :src="currentSong.image">
+                <img class="image" v-lazy="currentSong.image">
               </div>
             </div>
             <div class="playing-lyric-wrapper">
@@ -74,7 +74,7 @@
     <transition name="mini">
       <div @click="open" class="mini-player" v-show="!fullScreen">
         <div class="icon">
-          <img :class="cdCls" width="40" height="40" :src="currentSong.image">
+          <img :class="cdCls" width="40" height="40" v-lazy="currentSong.image">
         </div>
         <div class="text">
           <h2 class="name" v-html="currentSong.name"></h2>
@@ -85,7 +85,7 @@
            <i @click.stop="togglePlaying"  class="icon-mini" :class="miniIcon"></i>
           </ProgressCircle>
         </div>
-        <div class="control" @click="showPlaylist">
+        <div class="control" @click.stop="showPlaylist">
           <i class="icon-playlist"></i>
         </div>
       </div>
@@ -102,14 +102,15 @@ import {prefixStyle} from 'common/js/dom'
 import ProgressBar from 'base/progress-bar/progress-bar'
 import ProgressCircle from 'base/progress-circle/progress-circle'
 import {playMode} from 'common/js/config'
-import {shuffle} from 'common/js/util'
 import Lyric from 'lyric-parser'
 import Scroll from 'base/scroll/scroll'
 import Playlist from 'components/playlist/playlist'
+import {playerMixin} from 'common/js/mixin'
 
 const transform = prefixStyle('transform')
 const transitionDuration = prefixStyle('transitionDuration')
 export default {
+  mixins: [playerMixin],
   data () {
     return {
       songReady: false,
@@ -128,9 +129,6 @@ export default {
     playIcon() {
       return this.playing ? 'icon-pause' : 'icon-play'
     },
-    iconMode() {
-      return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
-    },
     miniIcon() {
       return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
     },
@@ -143,11 +141,9 @@ export default {
     ...mapGetters([
       'fullScreen',
       'playList',
-      'currentSong',
       'playing',
       'currentIndex',
-      'mode',
-      'sequenceList'
+      'mode'
     ])
   },
   created() {
@@ -287,24 +283,6 @@ export default {
         this.currentLyric.seek(currentTime * 1000)
       }
     },
-    changeMode() {
-      const mode = (this.mode + 1) % 3
-      this.setPlayMode(mode)
-      let list = null
-      if (mode === playMode.random) {
-        list = shuffle(this.sequenceList)
-      } else {
-        list = this.sequenceList
-      }
-      this.resetCurrentIndex(list)
-      this.setPlayList(list)
-    },
-    resetCurrentIndex(list) {
-      let index = list.findIndex((item) => {
-        return item.id === this.currentSong.id
-      })
-      this.setCurrnetIndex(index)
-    },
     getLyric() {
       this.currentSong.getLyric().then((lyric) => {
         this.currentLyric = new Lyric(lyric, this.handleLyric)
@@ -407,14 +385,14 @@ export default {
     },
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
-      setPlayingState: 'SET_PLAYING_STATE',
-      setCurrnetIndex: 'SET_CURRENT_INDEX',
-      setPlayMode: 'SET_PLAY_MODE',
-      setPlayList: 'SET_PLAY_LIST'
+      setPlayingState: 'SET_PLAYING_STATE'
     })
   },
   watch: {
     currentSong(newSong, oldSong) {
+      if (!newSong.id) {
+        return
+      }
       if (newSong.id === oldSong.id) {
         return
       }
@@ -424,10 +402,12 @@ export default {
         this.playingLyric = ''
         this.currentLineNum = 0
       }
-      setTimeout(() => {
-        this.$refs.audio.play()
-        this.getLyric()
-      }, 1000)
+      if (this.playing) {
+        setTimeout(() => {
+          this.$refs.audio.play()
+          this.getLyric()
+        }, 1000)
+      }
     },
     playing(newPlaying) {
       const audio = this.$refs.audio
@@ -636,7 +616,8 @@ export default {
       z-index: 180
       width: 100%
       height: 60px
-      background: $color-highlight-background
+      background: $color-background
+      box-shadow: 0 0 5px rgba(0,0,0,0.1)
       &.mini-enter-active, &.mini-leave-active
         transition: all 0.4s
       &.mini-enter, &.mini-leave-to
