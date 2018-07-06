@@ -1,4 +1,4 @@
-import {mapGetters, mapMutations} from 'vuex'
+import {mapGetters, mapMutations, mapActions} from 'vuex'
 import {playMode} from 'common/js/config'
 import {shuffle} from 'common/js/util'
 
@@ -34,7 +34,8 @@ export const playerMixin = {
     ...mapGetters([
       'sequenceList',
       'currentSong',
-      'mode'
+      'mode',
+      'favoriteList'
     ])
   },
   methods: {
@@ -56,10 +57,62 @@ export const playerMixin = {
       })
       this.setCurrnetIndex(index)
     },
+    toggleFavorite(song) {
+      if (this.isFavorite(song)) {
+        this.deleteFavoriteList(song)
+      } else {
+        this.saveFavoriteList(song)
+      }
+    },
+    getFavoriteIcon(song) {
+      if (this.isFavorite(song)) {
+        return 'icon-favorite'
+      }
+      return 'icon-not-favorite'
+    },
+    isFavorite(song) {
+      const index = this.favoriteList.findIndex((item) => {
+        return item.id === song.id
+      })
+      return index > -1
+    },
     ...mapMutations({
-      setCurrnetIndex: 'SET_CURRENT_INDEX',
+      setCurrentIndex: 'SET_CURRENT_INDEX',
       setPlayMode: 'SET_PLAY_MODE',
       setPlayList: 'SET_PLAY_LIST'
-    })
+    }),
+    ...mapActions([
+      'saveFavoriteList',
+      'deleteFavoriteList'
+    ])
+  }
+}
+
+export const searchMixin = {
+  data () {
+    return {
+      query: '',
+      refreshDelay: 100
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'searchHistory'
+    ])
+  },
+  methods: {
+    onQueryChange(query) {
+      this.query = query
+    },
+    addQuery(query) {
+      this.$refs.searchBox.setQuery(query)
+    },
+    blurInput() {
+      this.$refs.searchBox.blur()
+    },
+    ...mapActions([
+      'deleteSearchHistory',
+      'saveSearchHistoty'
+    ])
   }
 }

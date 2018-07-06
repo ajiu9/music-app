@@ -65,7 +65,7 @@
               <i @click="next" class="icon icon-next"></i>
             </div>
             <div class="icon i-right">
-              <i class="icon icon-not-favorite"></i>
+              <i class="icon" @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
             </div>
           </div>
         </div>
@@ -91,12 +91,12 @@
       </div>
     </transition>
     <playlist ref="playlist"></playlist>
-    <audio :src="currentSong.url" ref="audio" @canplay="ready" @error="error" @timeupdate="updataTime" @ended="end"></audio>
+    <audio :src="currentSong.url" ref="audio" @play="ready" @error="error" @timeupdate="updataTime" @ended="end"></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
-import {mapGetters, mapMutations} from 'vuex'
+import {mapGetters, mapMutations, mapActions} from 'vuex'
 import animations from 'create-keyframe-animation'
 import {prefixStyle} from 'common/js/dom'
 import ProgressBar from 'base/progress-bar/progress-bar'
@@ -228,12 +228,13 @@ export default {
       }
       if (this.playList.length === 1) {
         this.loop()
+        return
       } else {
         let index = this.currentIndex + 1
         if (index === this.playList.length) {
           index = 0
         }
-        this.setCurrnetIndex(index)
+        this.setCurrentIndex(index)
         if (!this.playing) {
           this.setPlayingState(true)
         }
@@ -246,12 +247,13 @@ export default {
       }
       if (this.playList.length === 1) {
         this.loop()
+        return
       } else {
         let index = this.currentIndex - 1
         if (index === -1) {
           index = this.playList.length - 1
         }
-        this.setCurrnetIndex(index)
+        this.setCurrentIndex(index)
         if (!this.playing) {
           this.togglePlaying()
         }
@@ -260,6 +262,7 @@ export default {
     },
     ready() {
       this.songReady = true
+      this.savePlayHistory(this.currentSong)
     },
     error() {
       this.songReady = true
@@ -285,6 +288,9 @@ export default {
     },
     getLyric() {
       this.currentSong.getLyric().then((lyric) => {
+        if (this.currentSong.lyric !== lyric) {
+          return
+        }
         this.currentLyric = new Lyric(lyric, this.handleLyric)
         if (this.playing) {
           this.currentLyric.play()
@@ -386,7 +392,10 @@ export default {
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
       setPlayingState: 'SET_PLAYING_STATE'
-    })
+    }),
+    ...mapActions([
+      'savePlayHistory'
+    ])
   },
   watch: {
     currentSong(newSong, oldSong) {
@@ -403,7 +412,8 @@ export default {
         this.currentLineNum = 0
       }
       if (this.playing) {
-        setTimeout(() => {
+        clearInterval(this.timer)
+        this.timer = setTimeout(() => {
           this.$refs.audio.play()
           this.getLyric()
         }, 1000)
@@ -581,9 +591,9 @@ export default {
           align-items: center
           .icon
             flex: 1
-            color: $color-theme
+            color: $color-highlight-background
             &.disable
-              color: $color-theme-d
+              color: $color-background-d
             i
               font-size: 30px
           .i-left
@@ -654,7 +664,7 @@ export default {
         padding: 0 10px
         .icon-play-mini, .icon-pause-mini, .icon-playlist
           font-size: 30px
-          color: $color-theme-d
+          color: $color-theme
         .icon-mini
           font-size: 32px
           position: absolute

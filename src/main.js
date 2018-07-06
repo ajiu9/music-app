@@ -9,6 +9,11 @@ import fastclick from 'fastclick'
 import 'common/stylus/index.styl'
 import VueLazyLoad from 'vue-lazyload'
 
+// import vConsole from 'vconsole'
+
+/* eslint-disable no-unused-vars */
+// var vconsole = new vConsole()
+
 Vue.use(VueLazyLoad, {
   loading: require('common/image/default.png')
 })

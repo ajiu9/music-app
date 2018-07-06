@@ -2,6 +2,9 @@
   <div class="m-header">
     <div class="icon"></div>
     <h1 class="text">江月夜</h1>
+    <router-link class="mine" to="/user" tag="div">
+    <i class="icon-mine"></i>
+    </router-link>
   </div>
 </template>
 

@@ -9,13 +9,13 @@
             <span @click="showConfirm" class="clear"><i class="icon-clear"></i></span>
           </h1>
         </div>
-        <scroll ref="listContent" :data="sequenceList" class="list-content">
+        <scroll ref="listContent" :data="sequenceList" :refreshDelay="refreshDelay" class="list-content">
           <transition-group name="list" tag="ul">
             <li ref="children" class="item" v-for="(item, index) in sequenceList" @click="selectItem(item, index)" :key="item.id">
               <i class="current" :class="getCurrentIcon(item)"></i>
               <span class="text" :class="getCurrentSty(item)">{{item.name}}</span>
-              <span class="like">
-                <i class="icon-not-favorite"></i>
+              <span class="like" @click.stop="toggleFavorite(item)" >
+                <i :class="getFavoriteIcon(item)"></i>
               </span>
               <span @click.stop="deleteOne(item)" class="delete">
                 <i class="icon-delete"></i>
@@ -24,7 +24,7 @@
           </transition-group>
         </scroll>
         <div class="list-operate">
-          <div class="add">
+          <div class="add" @click="addSong">
             <i class="icon-add"></i>
             <span class="text">添加歌曲到队列</span>
           </div>
@@ -34,6 +34,7 @@
         </div>
       </div>
       <confirm ref="confirm" @confirm="confirmClear" confirmBtnText="清空" text="是否清空播放列表"></confirm>
+      <add-song ref="addSong"></add-song>
     </div>
   </transition>
 </template>
@@ -44,12 +45,14 @@ import {mapGetters, mapMutations, mapActions} from 'vuex'
 import Scroll from 'base/scroll/scroll'
 import Confirm from 'base/confirm/confirm'
 import {playerMixin} from 'common/js/mixin'
+import AddSong from 'components/add-song/add-song'
 
 export default {
   mixins: [playerMixin],
   data() {
     return {
-      showFlag: false
+      showFlag: false,
+      refreshDelay: 100
     }
   },
   computed: {
@@ -112,6 +115,9 @@ export default {
       this.deleteSongList()
       this.hide()
     },
+    addSong() {
+      this.$refs.addSong.show()
+    },
     ...mapMutations({
       'setPlayingState': 'SET_PLAYING_STATE'
     }),
@@ -132,7 +138,8 @@ export default {
   },
   components: {
     Scroll,
-    Confirm
+    Confirm,
+    AddSong
   }
 }
 </script>
@@ -236,7 +243,7 @@ export default {
     .list-close
       text-align: center
       line-height: 50px
-      background: $color-highlight-background
+      background: #fcfcfc
       font-size: $font-size-medium-x
       color: $color-text-l
 </style>
